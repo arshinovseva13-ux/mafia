@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Мафия</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            background: radial-gradient(circle at 20% 30%, #0a0f1e, #03060c);
+            font-family: 'Segoe UI', 'Poppins', system-ui, -apple-system, sans-serif;
+            padding: 20px;
+            color: #ffffff;
+        }
+
+        .splash-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(145deg, #010b17, #07121f);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .splash-card {
+            background: rgba(10, 20, 30, 0.95);
+            backdrop-filter: blur(12px);
+            border-radius: 40px;
+            padding: 25px 30px;
+            text-align: center;
+            border: 1px solid rgba(220, 180, 80, 0.5);
+            max-width: 700px;
+            width: 100%;
+        }
+
+        .splash-card h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(135deg, #e6c27a, #b8860b);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .name-input-area input {
+            width: 80%;
+            padding: 12px 20px;
+            border-radius: 60px;
+            border: none;
+            background: #2a241a;
+            color: white;
+            font-size: 1rem;
+            text-align: center;
+            outline: none;
+            margin-bottom: 15px;
+        }
+
+        .avatar-selector {
+            margin: 15px 0;
+            background: rgba(0,0,0,0.4);
+            border-radius: 24px;
+            padding: 12px;
+        }
+
+        .avatars-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 8px;
+            max-height: 120px;
+            overflow-y: auto;
+        }
+
+        .avatar-option {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: rgba(30,25,18,0.6);
+            padding: 5px;
+            border-radius: 16px;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+
+        .avatar-option.selected {
+            border-color: #e7b42c;
+            background: rgba(80,60,30,0.8);
+        }
+
+        .avatar-emoji { font-size: 1.8rem; }
+        .avatar-name { font-size: 0.6rem; color: #ffde9e; }
+
+        .roles-selector {
+            margin: 15px 0;
+            background: rgba(0,0,0,0.4);
+            border-radius: 24px;
+            padding: 12px;
+        }
+
+        .roles-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+
+        .role-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(30,25,18,0.6);
+            padding: 5px 8px;
+            border-radius: 25px;
+            font-size: 0.75rem;
+        }
+
+        .role-checkbox input { width: 14px; height: 14px; accent-color: #d4812a; }
+        .role-checkbox label { cursor: pointer; flex: 1; }
+
+        .role-count-info { font-size: 0.7rem; margin-top: 8px; color: #ccaa66; }
+
+        .start-btn {
+            background: linear-gradient(95deg, #9b4b1e, #d4812a);
+            border: none;
+            padding: 10px 35px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border-radius: 60px;
+            color: white;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .game-container {
+            max-width: 1500px;
+            width: 100%;
+            margin: 0 auto;
+            background: rgba(5, 10, 20, 0.85);
+            backdrop-filter: blur(5px);
+            border-radius: 40px;
+            padding: 20px;
+            border: 2px solid rgba(210, 165, 70, 0.5);
+        }
+
+        .horizontal-table {
+            background: linear-gradient(145deg, #3a2a1a, #1f180e);
+            border-radius: 60px;
+            padding: 20px 15px;
+            margin-bottom: 20px;
+            border: 6px solid #b87c3a;
+        }
+
+        .players-row {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .player-chair {
+            width: 105px;
+            text-align: center;
+            background: rgba(0,0,0,0.75);
+            border-radius: 35px 35px 20px 20px;
+            padding: 10px 4px;
+            border: 1px solid #d4a259;
+            box-shadow: 0 5px 0 #4a2e12;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .player-chair.alive { background: rgba(35, 28, 18, 0.95); border-top: 3px solid #f3bc5c; }
+        .player-chair.dead { opacity: 0.5; filter: grayscale(0.5); }
+        .player-chair.blinking { animation: pulse 0.8s ease; }
+
+        @keyframes pulse {
+            0% { transform: scale(1); background: rgba(255,200,100,0); }
+            50% { transform: scale(1.08); background: rgba(255,200,100,0.5); }
+            100% { transform: scale(1); background: rgba(255,200,100,0); }
+        }
+
+        .avatar { width: 50px; height: 50px; margin: 0 auto 5px; border-radius: 100px; display: flex; align-items: center; justify-content: center; font-size: 2rem; background: #2e2a22; border: 2px solid #e7b42c; }
+        .player-name-chair { font-weight: bold; font-size: 0.7rem; color: #ffefc0; }
+        .player-role-chair { font-size: 0.6rem; background: #000000cc; border-radius: 20px; padding: 2px 5px; display: inline-block; margin-top: 3px; }
+        .ally-badge { font-size: 0.7rem; background: #8b0000aa; border-radius: 12px; padding: 2px 5px; margin-top: 4px; display: inline-block; }
+
+        .chats-container { display: flex; gap: 15px; margin: 15px 0; flex-wrap: wrap; }
+        .chat-panel { flex: 1; min-width: 240px; background: #0a0f18e6; border-radius: 24px; border: 1px solid #c99f4a; overflow: hidden; display: flex; flex-direction: column; }
+        .chat-header { font-weight: bold; color: #ffda88; padding: 8px 12px; border-bottom: 1px solid #c99f4a; background: rgba(0,0,0,0.3); font-size: 0.8rem; }
+        .chat-messages { height: 200px; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 6px; }
+        .message-bubble { max-width: 90%; padding: 6px 10px; border-radius: 16px; font-size: 0.75rem; animation: fadeInUp 0.3s ease; }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        .message-bubble.incoming { background: #2a2a35; align-self: flex-start; border-bottom-left-radius: 3px; }
+        .message-bubble.outgoing { background: #d4812a; align-self: flex-end; border-bottom-right-radius: 3px; }
+        .message-bubble.system { background: #1e3a3a; color: #aaffdd; align-self: center; font-size: 0.65rem; text-align: center; }
+        .message-sender { font-size: 0.65rem; font-weight: bold; margin-bottom: 2px; color: #ffda88; }
+        .log-message { font-family: monospace; font-size: 0.7rem; padding: 4px 6px; border-left: 2px solid #ffaa44; background: rgba(0,0,0,0.3); margin-bottom: 3px; border-radius: 6px; }
+        .chat-input-area { display: flex; gap: 6px; padding: 8px; border-top: 1px solid #5a4a2a; background: rgba(0,0,0,0.3); }
+        .chat-input-area input { flex: 1; padding: 6px 12px; border-radius: 30px; border: none; background: #2a241a; color: white; outline: none; }
+        .chat-input-area button { background: #9b4b1e; border: none; padding: 6px 15px; border-radius: 30px; color: white; cursor: pointer; }
+
+        .action-area { background: #0b0f1ad9; border-radius: 24px; padding: 12px; margin-top: 10px; }
+        .action-title { font-size: 0.9rem; font-weight: bold; color: #ffda88; margin-bottom: 8px; }
+        .action-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
+        .action-btn { background: #4a351c; border: none; padding: 5px 14px; border-radius: 35px; font-weight: bold; color: white; cursor: pointer; font-size: 0.8rem; transition: 0.1s; }
+        .action-btn:hover { background: #e69a2e; }
+        .action-btn.skip-btn { background: #4a4a4a; }
+        .action-btn.skip-btn:hover { background: #666; }
+
+        .game-header { display: flex; justify-content: space-between; flex-wrap: wrap; margin-bottom: 15px; gap: 8px; align-items: center; }
+        .phase-indicator { background: #1e1b13; padding: 5px 18px; border-radius: 40px; font-weight: bold; font-size: 1rem; color: #ffd966; }
+        .role-badge { background: #2a241a; padding: 4px 12px; border-radius: 32px; font-size: 0.75rem; }
+        .toggle-rules { background: none; border: 1px solid #e7b42c; padding: 4px 12px; border-radius: 30px; color: #ffde9e; cursor: pointer; font-size: 0.7rem; }
+        .rules-panel { background: #0a0712e0; border-radius: 20px; padding: 10px; margin-top: 10px; font-size: 0.7rem; max-height: 0; overflow: hidden; transition: 0.3s; }
+        .rules-panel.open { max-height: 500px; padding: 10px; }
+        .winner-message { background: #131a0fe0; text-align: center; padding: 12px; border-radius: 28px; font-size: 0.9rem; }
+
+        @media (max-width: 800px) { .player-chair { width: 90px; } .avatar { width: 45px; height: 45px; font-size: 1.8rem; } }
+    </style>
+</head>
+<body>
+
+<div id="splashScreen" class="splash-screen">
+    <div class="splash-card">
+        <h1>🔪 МАФИЯ 🎩</h1>
+        <p>Честная игра</p>
+        <div class="name-input-area">
+            <input type="text" id="playerNameInput" placeholder="Ваше имя" maxlength="20" autocomplete="off" value="Игрок">
+        </div>
+        <div class="avatar-selector">
+            <h3>🎨 Ваш аватар:</h3>
+            <div class="avatars-grid" id="avatarsGrid"></div>
+        </div>
+        <div class="roles-selector">
+            <h3>🎭 Выберите роли (от 4 до 9):</h3>
+            <div class="roles-grid" id="rolesChecklist"></div>
+            <div class="role-count-info" id="roleCountInfo">✅ Выбрано: 9 из 9</div>
+        </div>
+        <button id="confirmStartBtn" class="start-btn">▶ ЗА СТОЛ</button>
+        <div style="margin-top: 10px;"><button id="showRulesSplash" class="toggle-rules">📜 Правила</button></div>
+    </div>
+</div>
+
+<div id="gameMain" style="display: none;">
+    <div class="game-container">
+        <div class="game-header">
+            <div class="phase-indicator" id="phaseLabel">🌙 НОЧЬ</div>
+            <div class="role-badge" id="myRoleDisplay">Ваша роль: --</div>
+            <button id="toggleRulesBtn" class="toggle-rules">📖 Правила</button>
+        </div>
+        <div class="horizontal-table">
+            <div class="table-title">🍷 ДЛИННЫЙ СТОЛ ЗАСЕДАНИЙ</div>
+            <div id="roundTable" class="players-row"></div>
+        </div>
+        <div class="chats-container">
+            <div class="chat-panel">
+                <div class="chat-header">💬 ОБЩИЙ ЧАТ</div>
+                <div id="discussionMessages" class="chat-messages"></div>
+                <div class="chat-input-area">
+                    <input type="text" id="chatInput" placeholder="Напишите сообщение..." maxlength="100">
+                    <button id="sendChatBtn">📨</button>
+                </div>
+            </div>
+            <div class="chat-panel">
+                <div class="chat-header">📜 ЛОГ СОБЫТИЙ</div>
+                <div id="eventLogMessages" class="chat-messages"></div>
+            </div>
+        </div>
+        <div class="action-area" id="actionArea">
+            <div class="action-title" id="actionTitle">⚡ Ожидание хода...</div>
+            <div id="actionButtonsContainer" class="action-buttons"></div>
+        </div>
+        <div id="rulesPanel" class="rules-panel">
+            <strong>🎭 ПРАВИЛА ИГРЫ:</strong><br>
+            • <strong>МАФИЯ (зло)</strong> — каждую ночь убивает одного игрока. Мафия знает друг друга.<br>
+            • <strong>МАНЬЯК (зло)</strong> — каждую ночь убивает одного игрока. Маньяк знает мафию.<br>
+            • <strong>КОМИССАР (добро)</strong> — ночью проверяет, является ли игрок мафией.<br>
+            • <strong>ДОКТОР (добро)</strong> — ночью лечит игрока, спасая от смерти.<br>
+            • <strong>ШЕРИФ (добро)</strong> — ночью проверяет, является ли игрок преступником.<br>
+            • <strong>АДВОКАТ (добро)</strong> — один раз спасает от казни.<br>
+            • <strong>СНАЙПЕР (добро)</strong> — один раз убивает ночью.<br>
+            • <strong>ШПИОН (добро)</strong> — узнаёт жертву мафии.<br>
+            • <strong>МИРНЫЙ (добро)</strong> — без способностей.<br><br>
+            <strong>ПОБЕДА:</strong> Добро — убить всех злых. Зло — когда злых ≥ мирных.
+        </div>
+    </div>
+</div>
+
+<script>
+    const ROLES_DB = {
+        MAFIA: { name: "Мафия", team: "evil", emoji: "🔪", order: 2 },
+        COMMISSIONER: { name: "Комиссар", team: "good", emoji: "🔍", order: 5 },
+        DOCTOR: { name: "Доктор", team: "good", emoji: "💊", order: 1 },
+        MANIAC: { name: "Маньяк", team: "evil", emoji: "🔪", order: 3 },
+        SHERIFF: { name: "Шериф", team: "good", emoji: "⭐", order: 6 },
+        LAWYER: { name: "Адвокат", team: "good", emoji: "⚖️", order: 0 },
+        SNIPER: { name: "Снайпер", team: "good", emoji: "🎯", order: 7 },
+        SPY: { name: "Шпион", team: "good", emoji: "🕵️", order: 4 },
+        CIVILIAN: { name: "Мирный", team: "good", emoji: "👤", order: 0 }
+    };
+
+    const ALL_AVATARS = [
+        { emoji: "🧑‍🎩", name: "Шляпа" }, { emoji: "🕵️‍♂️", name: "Детектив" }, { emoji: "👩‍🎤", name: "Певица" },
+        { emoji: "🧔‍♂️", name: "Бородач" }, { emoji: "👩‍⚖️", name: "Судья" }, { emoji: "🧛‍♂️", name: "Вампир" },
+        { emoji: "👩‍🍳", name: "Повар" }, { emoji: "👨‍🎨", name: "Художник" }, { emoji: "👩‍🔧", name: "Механик" },
+        { emoji: "🐺", name: "Волк" }, { emoji: "🦊", name: "Лиса" }, { emoji: "🐱", name: "Кот" },
+        { emoji: "👻", name: "Призрак" }, { emoji: "🤠", name: "Ковбой" }, { emoji: "🧙‍♂️", name: "Маг" },
+        { emoji: "🧚‍♀️", name: "Фея" }, { emoji: "🦸‍♂️", name: "Герой" }, { emoji: "👾", name: "Инопланетянин" }
+    ];
+
+    function getBotNames(count) {
+        const baseNames = ["Алексей", "Мария", "Дмитрий", "Елена", "Сергей", "Анна", "Владимир", "Ольга", "Татьяна", "Игорь", "Наталья", "Михаил"];
+        const shuffled = [...baseNames];
+        for (let i = shuffled.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+        return shuffled.slice(0, count);
+    }
+
+    function getRandomAvatars(count, excludeAvatar) {
+        let available = ALL_AVATARS.filter(a => a.emoji !== excludeAvatar).map(a => a.emoji);
+        for (let i = available.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [available[i], available[j]] = [available[j], available[i]];
+        }
+        return available.slice(0, count);
+    }
+
+    class GameEngine {
+        constructor(playerName, selectedRoles, playerAvatar) {
+            this.players = [];
+            this.humanId = 0;
+            this.phase = "NIGHT";
+            this.winner = null;
+            this.dayVotes = new Map();
+            this.lawyerUsed = false;
+            this.nightActions = { mafiaTarget: null, maniacTarget: null, sniperTarget: null, doctorTarget: null, commCheck: null, sheriffCheck: null };
+            this.discussionMessages = [];
+            this.eventMessages = [];
+            this.waitingForHumanAction = false;
+            this.resolveCallback = null;
+            this.playerName = playerName;
+            this.playerAvatar = playerAvatar;
+            this.selectedRoles = selectedRoles;
+            this.isProcessing = false;
+            this.mafiaIds = [];
+            this.maniacId = null;
+        }
+
+        delay(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
+
+        addDiscussionMessage(sender, text, isOutgoing = false, isSystem = false) {
+            const msg = { id: Date.now(), sender, text, time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}), isOutgoing, isSystem };
+            this.discussionMessages.unshift(msg);
+            if (this.discussionMessages.length > 50) this.discussionMessages.pop();
+            this.updateDiscussionUI();
+            setTimeout(() => { const c = document.getElementById("discussionMessages"); if(c) c.scrollTop = c.scrollHeight; }, 50);
+        }
+
+        addEventLog(text) {
+            const msg = { text, time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) };
+            this.eventMessages.unshift(msg);
+            if (this.eventMessages.length > 60) this.eventMessages.pop();
+            this.updateEventUI();
+        }
+
+        addPrivateLog(text) {
+            const msg = { text, time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) };
+            this.eventMessages.unshift(msg);
+            if (this.eventMessages.length > 60) this.eventMessages.pop();
+            this.updateEventUI();
+            this.addDiscussionMessage("🔒 Только для вас", text, false, true);
+        }
+
+        addUserMessage(text) {
+            if (!text.trim()) return;
+            const human = this.getPlayerById(this.humanId);
+            if (human && human.alive && this.phase === "DAY" && !this.winner && !this.isProcessing) {
+                this.addDiscussionMessage(human.name, text, true);
+                this.botReactionToChat(text);
+            } else if (this.phase !== "DAY") this.addDiscussionMessage("Система", "Сейчас ночь, вы не можете писать в чат!", false, true);
+            else if (!human.alive) this.addDiscussionMessage("Система", "Вы мертвы и не можете писать в чат", false, true);
+        }
+
+        async botReactionToChat(userText) {
+            const bots = this.players.filter(p => !this.isHuman(p) && p.alive);
+            if (Math.random() > 0.65 && bots.length) {
+                await this.delay(2000);
+                const bot = bots[Math.floor(Math.random() * bots.length)];
+                const replies = ["Хм, интересное мнение...", "Я не уверен", "Возможно, вы правы", "Подозрительно", "Давайте проверим", "Мне это не нравится", "Согласен"];
+                this.addDiscussionMessage(bot.name, replies[Math.floor(Math.random() * replies.length)], false);
+            }
+        }
+
+        async blinkPlayer(playerId) {
+            const seat = document.querySelector(`.player-chair[data-id="${playerId}"]`);
+            if (seat) { seat.classList.add('blinking'); await this.delay(500); seat.classList.remove('blinking'); }
+        }
+
+        initGame() {
+            let rolesForGame = [...this.selectedRoles];
+            for (let i = rolesForGame.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [rolesForGame[i], rolesForGame[j]] = [rolesForGame[j], rolesForGame[i]];
+            }
+            
+            const humanRole = rolesForGame.pop();
+            const totalPlayers = rolesForGame.length + 1;
+            
+            this.players = [];
+            this.players.push({
+                id: 0,
+                name: this.playerName,
+                roleKey: humanRole,
+                alive: true,
+                avatar: this.playerAvatar,
+                extra: { knownChecks: [], lawyerProtectUsed: false, sniperShotUsed: false, spyInfo: null }
+            });
+            
+            const botAvatars = getRandomAvatars(totalPlayers - 1, this.playerAvatar);
+            const botNames = getBotNames(totalPlayers - 1);
+            for (let i = 1; i <= totalPlayers - 1; i++) {
+                const botRole = rolesForGame.pop();
+                this.players.push({
+                    id: i,
+                    name: botNames[i-1],
+                    roleKey: botRole,
+                    alive: true,
+                    avatar: botAvatars[i-1] || "👤",
+                    extra: { knownChecks: [], lawyerProtectUsed: false, sniperShotUsed: false, spyInfo: null }
+                });
+            }
+            
+            // Определяем ID мафии и маньяка
+            this.mafiaIds = this.players.filter(p => p.roleKey === "MAFIA").map(p => p.id);
+            const maniacPlayer = this.players.find(p => p.roleKey === "MANIAC");
+            this.maniacId = maniacPlayer ? maniacPlayer.id : null;
+            
+            this.humanId = 0;
+            this.winner = null;
+            this.phase = "NIGHT";
+            this.dayVotes.clear();
+            this.lawyerUsed = false;
+            this.discussionMessages = [];
+            this.eventMessages = [];
+            this.nightActions = { mafiaTarget: null, maniacTarget: null, sniperTarget: null, doctorTarget: null, commCheck: null, sheriffCheck: null };
+            
+            this.addEventLog(`Игра началась! Всего игроков: ${totalPlayers}. Ваша роль: ${ROLES_DB[humanRole].name}`);
+            this.addDiscussionMessage("Система", `Ваша роль: ${ROLES_DB[humanRole].name}.`, false, true);
+            
+            // Если игрок мафия или маньяк, сообщаем ему о союзниках
+            if (humanRole === "MAFIA") {
+                const allies = this.players.filter(p => p.roleKey === "MAFIA" && p.id !== 0).map(p => `${p.name} (${p.avatar})`);
+                if (allies.length > 0) {
+                    this.addPrivateLog(`🤝 Вы - Мафия. Ваши союзники: ${allies.join(", ")}`);
+                }
+                if (this.maniacId !== null) {
+                    const maniac = this.getPlayerById(this.maniacId);
+                    this.addPrivateLog(`🤝 Маньяк (${maniac.name}) — ваша цель не убивать друг друга.`);
+                }
+            } else if (humanRole === "MANIAC") {
+                const allies = this.players.filter(p => p.roleKey === "MAFIA").map(p => `${p.name} (${p.avatar})`);
+                if (allies.length > 0) {
+                    this.addPrivateLog(`🤝 Вы - Маньяк. Мафия: ${allies.join(", ")}. Не убивайте их!`);
+                }
+            }
+            
+            this.updateUI();
+            this.renderTableWithIds();
+            this.startNight();
+        }
+
+        renderTableWithIds() {
+            const container = document.getElementById("roundTable");
+            if (!container) return;
+            container.innerHTML = "";
+            const humanPlayer = this.getPlayerById(this.humanId);
+            const isEvil = humanPlayer && (humanPlayer.roleKey === "MAFIA" || humanPlayer.roleKey === "MANIAC");
+            
+            this.players.forEach(p => {
+                const seat = document.createElement("div");
+                seat.className = `player-chair ${p.alive ? "alive" : "dead"}`;
+                seat.setAttribute("data-id", p.id);
+                
+                let roleDisplay = "???";
+                let extraBadge = "";
+                
+                if (!p.alive) {
+                    roleDisplay = `⚰️ ${ROLES_DB[p.roleKey].name}`;
+                } else if (p.id === this.humanId) {
+                    roleDisplay = `🎭 ${ROLES_DB[p.roleKey].name}`;
+                } else if (isEvil) {
+                    // Если игрок — мафия или маньяк, он видит своих союзников
+                    if ((humanPlayer.roleKey === "MAFIA" && p.roleKey === "MAFIA") || 
+                        (humanPlayer.roleKey === "MAFIA" && p.roleKey === "MANIAC") ||
+                        (humanPlayer.roleKey === "MANIAC" && p.roleKey === "MAFIA")) {
+                        roleDisplay = `🎭 ${ROLES_DB[p.roleKey].name}`;
+                        extraBadge = `<div class="ally-badge">⚔️ СОЮЗНИК</div>`;
+                    } else {
+                        roleDisplay = "???";
+                    }
+                } else {
+                    roleDisplay = "???";
+                }
+                
+                seat.innerHTML = `
+                    <div class="avatar">${p.avatar}</div>
+                    <div class="player-name-chair">${p.name} ${p.id === this.humanId ? "(Вы)" : ""}</div>
+                    <div class="player-role-chair">${roleDisplay}</div>
+                    ${extraBadge}
+                    <div>${p.alive ? "● жив" : "✘ мёртв"}</div>
+                `;
+                container.appendChild(seat);
+            });
+        }
+
+        getAlivePlayers() { return this.players.filter(p => p.alive); }
+        getPlayerById(id) { return this.players.find(p => p.id === id); }
+
+        async startNight() {
+            this.isProcessing = true;
+            this.phase = "NIGHT";
+            this.updateUI();
+            this.nightActions = { mafiaTarget: null, maniacTarget: null, sniperTarget: null, doctorTarget: null, commCheck: null, sheriffCheck: null };
+            
+            this.addEventLog("═════════ НОЧЬ ═════════");
+            this.addEventLog("Город засыпает. Все закрывают глаза...");
+            await this.delay(2500);
+            
+            await this.processRole("DOCTOR", "💊 Доктор просыпается...", this.doctorNightAction.bind(this));
+            await this.processRole("MAFIA", "🔪 Мафия просыпается...", this.mafiaNightAction.bind(this));
+            await this.processRole("MANIAC", "🔪 Маньяк просыпается...", this.maniacNightAction.bind(this));
+            await this.processRole("SPY", "🕵️ Шпион просыпается...", this.spyNightAction.bind(this));
+            await this.processRole("COMMISSIONER", "🔍 Комиссар просыпается...", this.commissionerNightAction.bind(this));
+            await this.processRole("SHERIFF", "⭐ Шериф просыпается...", this.sheriffNightAction.bind(this));
+            await this.processRole("SNIPER", "🎯 Снайпер просыпается...", this.sniperNightAction.bind(this));
+            
+            await this.resolveNight();
+            this.isProcessing = false;
+        }
+
+        async processRole(roleKey, wakeMsg, actionFunc) {
+            const rolePlayers = this.players.filter(p => p.alive && p.roleKey === roleKey);
+            if (rolePlayers.length === 0) return;
+            
+            this.addEventLog(wakeMsg);
+            await this.delay(1500);
+            
+            for (let player of rolePlayers) {
+                if (this.isHuman(player)) {
+                    this.waitingForHumanAction = true;
+                    await actionFunc(player, true);
+                    return;
+                } else {
+                    await actionFunc(player, false);
+                    await this.delay(1200);
+                }
+            }
+        }
+
+        async doctorNightAction(doctor, isHuman = false) {
+            const aliveOthers = this.getAlivePlayers().filter(p => p.id !== doctor.id);
+            if (aliveOthers.length === 0) return;
+            
+            if (isHuman) {
+                this.showHumanChoice("DOCTOR", "💊 Выберите игрока для лечения:", async (target) => {
+                    this.nightActions.doctorTarget = target.id;
+                    this.addEventLog(`💊 Доктор выбрал пациента.`);
+                    this.waitingForHumanAction = false;
+                    if (this.resolveCallback) this.resolveCallback();
+                });
+                await new Promise(resolve => { this.resolveCallback = resolve; });
+            } else {
+                const target = aliveOthers[Math.floor(Math.random() * aliveOthers.length)];
+                this.nightActions.doctorTarget = target.id;
+                this.addEventLog(`💊 Доктор выбрал пациента.`);
+            }
+        }
+
+        async mafiaNightAction(mafia, isHuman = false) {
+            const aliveOthers = this.getAlivePlayers().filter(p => p.id !== mafia.id && p.roleKey !== "MAFIA" && p.roleKey !== "MANIAC");
+            if (aliveOthers.length === 0) return;
+            
+            if (isHuman) {
+                this.showHumanChoice("MAFIA", "🔪 Выберите жертву для убийства (нельзя убивать маньяка и свою мафию):", async (target) => {
+                    this.nightActions.mafiaTarget = target.id;
+                    this.addEventLog(`🔪 Мафия выбрала жертву.`);
+                    this.waitingForHumanAction = false;
+                    if (this.resolveCallback) this.resolveCallback();
+                });
+                await new Promise(resolve => { this.resolveCallback = resolve; });
+            } else {
+                const target = aliveOthers[Math.floor(Math.random() * aliveOthers.length)];
+                this.nightActions.mafiaTarget = target.id;
+                this.addEventLog(`🔪 Мафия выбрала жертву.`);
+            }
+        }
+
+        async maniacNightAction(maniac, isHuman = false) {
+            const aliveOthers = this.getAlivePlayers().filter(p => p.id !== maniac.id && p.roleKey !== "MANIAC");
+            if (aliveOthers.length === 0) return;
+            
+            if (isHuman) {
+                this.showHumanChoice("MANIAC", "🔪 Выберите жертву для убийства (нельзя убивать себя):", async (target) => {
+                    this.nightActions.maniacTarget = target.id;
+                    this.addEventLog(`🔪 Маньяк выбрал жертву.`);
+                    this.waitingForHumanAction = false;
+                    if (this.resolveCallback) this.resolveCallback();
+                });
+                await new Promise(resolve => { this.resolveCallback = resolve; });
+            } else {
+                const target = aliveOthers[Math.floor(Math.random() * aliveOthers.length)];
+                this.nightActions.maniacTarget = target.id;
+                this.addEventLog(`🔪 Маньяк выбрал жертву.`);
+            }
+        }
+
+        async spyNightAction(spy, isHuman = false) {
+            await this.delay(500);
+            if (this.nightActions.mafiaTarget) {
+                const target = this.getPlayerById(this.nightActions.mafiaTarget);
+                if (target) {
+                    if (isHuman) {
+                        this.addPrivateLog(`🕵️ Шпион: вы узнали, что мафия целится в игрока ${target.name}`);
+                    } else {
+                        this.addEventLog(`🕵️ Шпион узнал информацию.`);
+                    }
+                }
+            } else {
+                if (isHuman) {
+                    this.addPrivateLog(`🕵️ Шпион: мафия никого не выбрала этой ночью.`);
+                } else {
+                    this.addEventLog(`🕵️ Шпион не получил информации.`);
+                }
+            }
+            if (isHuman) {
+                this.showSimpleContinue("🕵️ Вы - Шпион. Нажмите 'Далее', чтобы продолжить.");
+                await new Promise(resolve => { this.resolveCallback = resolve; });
+            }
+        }
+
+        async commissionerNightAction(comm, isHuman = false) {
+            const aliveOthers = this.getAlivePlayers().filter(p => p.id !== comm.id);
+            if (aliveOthers.length === 0) return;
+            
+            if (isHuman) {
+                this.showHumanChoice("COMMISSIONER", "🔍 Выберите игрока для проверки на мафию:", async (target) => {
+                    this.nightActions.commCheck = target.id;
+                    const isMafia = (target.roleKey === "MAFIA");
+                    this.addPrivateLog(`🔍 Результат проверки: игрок ${target.name} — ${isMafia ? "МАФИЯ!" : "НЕ МАФИЯ"}`);
+                    this.addEventLog(`🔍 Комиссар провёл проверку.`);
+                    this.waitingForHumanAction = false;
+                    if (this.resolveCallback) this.resolveCallback();
+                });
+                await new Promise(resolve => { this.resolveCallback = resolve; });
+            } else {
+                const target = aliveOthers[Math.floor(Math.random() * aliveOthers.length)];
+                this.nightActions.commCheck = target.id;
+                this.addEventLog(`🔍 Комиссар провёл проверку.`);
+            }
+        }
+
+        async sheriffNightAction(sheriff, isHuman = false) {
+            const aliveOthers = this.getAlivePlayers().filter(p => p.id !== sheriff.id);
+            if (aliveOthers.length === 0) return;
+            
+            if (isHuman) {
+                this.showHumanChoice("SHERIFF", "⭐ Выберите игрока для проверки на преступление:", async (target) => {
+                    this.nightActions.sheriffCheck = target.id;
+                    const isEvil = (target.roleKey === "MAFIA" || target.roleKey === "MANIAC");
+                    this.addPrivateLog(`⭐ Результат проверки: игрок ${target.name} — ${isEvil ? "ПРЕСТУПНИК!" : "ЧЕСТНЫЙ"}`);
+                    this.addEventLog(`⭐ Шериф провёл проверку.`);
+                    this.waitingForHumanAction = false;
+                    if (this.resolveCallback) this.resolveCallback();
+                });
+                await new Promise(resolve => { this.resolveCallback = resolve; });
+            } else {
+                const target = aliveOthers[Math.floor(Math.random() * aliveOthers.length)];
+                this.nightActions.sheriffCheck = target.id;
+                this.addEventLog(`⭐ Шериф провёл проверку.`);
+            }
+        }
+
+        async sniperNightAction(sniper, isHuman = false) {
+            if (sniper.extra.sniperShotUsed) {
+                if (isHuman) this.addPrivateLog(`🎯 Вы уже использовали свой выстрел.`);
+                return;
+            }
+            const aliveOthers = this.getAlivePlayers().filter(p => p.id !== sniper.id);
+            if (aliveOthers.length === 0) return;
+            
+            if (isHuman) {
+                this.showHumanChoiceWithSkip("SNIPER", "🎯 Выберите цель для выстрела (один раз за игру):", async (target) => {
+                    if (target === null) {
+                        // Снайпер решил не стрелять
+                        this.addEventLog(`🎯 Снайпер решил не стрелять этой ночью.`);
+                        this.addPrivateLog(`🎯 Вы решили не стрелять этой ночью.`);
+                    } else {
+                        this.nightActions.sniperTarget = target.id;
+                        sniper.extra.sniperShotUsed = true;
+                        this.addEventLog(`🎯 Снайпер сделал выстрел.`);
+                    }
+                    this.waitingForHumanAction = false;
+                    if (this.resolveCallback) this.resolveCallback();
+                });
+                await new Promise(resolve => { this.resolveCallback = resolve; });
+            } else {
+                // Бот-снайпер может иногда пропустить выстрел
+                if (Math.random() < 0.3) {
+                    // 30% шанс не стрелять
+                    this.addEventLog(`🎯 Снайпер решил не стрелять этой ночью.`);
+                } else {
+                    const target = aliveOthers[Math.floor(Math.random() * aliveOthers.length)];
+                    this.nightActions.sniperTarget = target.id;
+                    sniper.extra.sniperShotUsed = true;
+                    this.addEventLog(`🎯 Снайпер сделал выстрел.`);
+                }
+            }
+        }
+
+        showHumanChoice(role, title, callback) {
+            const container = document.getElementById("actionButtonsContainer");
+            const titleDiv = document.getElementById("actionTitle");
+            if (!container) return;
+            container.innerHTML = "";
+            titleDiv.innerHTML = `🌙 НОЧЬ. Ваша роль: ${ROLES_DB[role].name}.<br>${title}`;
+            
+            let aliveTargets = this.getAlivePlayers().filter(p => p.id !== this.humanId);
+            
+            // Дополнительная фильтрация для мафии и маньяка
+            const humanPlayer = this.getPlayerById(this.humanId);
+            if (role === "MAFIA") {
+                aliveTargets = aliveTargets.filter(p => p.roleKey !== "MAFIA" && p.roleKey !== "MANIAC");
+            } else if (role === "MANIAC") {
+                aliveTargets = aliveTargets.filter(p => p.id !== this.humanId);
+            }
+            
+            aliveTargets.forEach(t => {
+                const btn = document.createElement("button");
+                btn.innerText = `${t.avatar} ${t.name}`;
+                btn.className = "action-btn";
+                btn.onclick = () => callback(t);
+                container.appendChild(btn);
+            });
+        }
+
+        showHumanChoiceWithSkip(role, title, callback) {
+            const container = document.getElementById("actionButtonsContainer");
+            const titleDiv = document.getElementById("actionTitle");
+            if (!container) return;
+            container.innerHTML = "";
+            titleDiv.innerHTML = `🌙 НОЧЬ. Ваша роль: ${ROLES_DB[role].name}.<br>${title}`;
+            
+            let aliveTargets = this.getAlivePlayers().filter(p => p.id !== this.humanId);
+            
+            // Добавляем кнопку "Не стрелять" для снайпера
+            const skipBtn = document.createElement("button");
+            skipBtn.innerText = "🚫 НЕ СТРЕЛЯТЬ";
+            skipBtn.className = "action-btn skip-btn";
+            skipBtn.onclick = () => callback(null);
+            container.appendChild(skipBtn);
+            
+            aliveTargets.forEach(t => {
+                const btn = document.createElement("button");
+                btn.innerText = `${t.avatar} ${t.name}`;
+                btn.className = "action-btn";
+                btn.onclick = () => callback(t);
+                container.appendChild(btn);
+            });
+        }
+
+        showSimpleContinue(message) {
+            const container = document.getElementById("actionButtonsContainer");
+            const titleDiv = document.getElementById("actionTitle");
+            if (!container) return;
+            container.innerHTML = "";
+            titleDiv.innerHTML = message;
+            const btn = document.createElement("button");
+            btn.innerText = "✅ ДАЛЕЕ";
+            btn.className = "action-btn";
+            btn.onclick = () => {
+                this.waitingForHumanAction = false;
+                if (this.resolveCallback) this.resolveCallback();
+            };
+            container.appendChild(btn);
+        }
+
+        async resolveNight() {
+            const savedId = this.nightActions.doctorTarget;
+            let killed = [];
+            
+            this.addEventLog("═════════ РАЗБОР НОЧНЫХ ДЕЙСТВИЙ ═════════");
+            await this.delay(2000);
+            
+            if (this.nightActions.mafiaTarget && this.nightActions.mafiaTarget !== savedId) killed.push(this.nightActions.mafiaTarget);
+            if (this.nightActions.maniacTarget && this.nightActions.maniacTarget !== savedId) killed.push(this.nightActions.maniacTarget);
+            if (this.nightActions.sniperTarget && this.nightActions.sniperTarget !== savedId) killed.push(this.nightActions.sniperTarget);
+            
+            const uniqueKills = [...new Set(killed)];
+            for (let pid of uniqueKills) {
+                const p = this.getPlayerById(pid);
+                if (p && p.alive) {
+                    p.alive = false;
+                    this.addEventLog(`💀 ${p.name} погибает этой ночью...`);
+                    this.addDiscussionMessage("Система", `💀 ${p.name} погиб этой ночью...`, false, true);
+                    await this.delay(2000);
+                }
+            }
+            if ((this.nightActions.mafiaTarget && this.nightActions.mafiaTarget === savedId) ||
+                (this.nightActions.maniacTarget && this.nightActions.maniacTarget === savedId) ||
+                (this.nightActions.sniperTarget && this.nightActions.sniperTarget === savedId)) {
+                this.addEventLog(`💊 Доктор спасает жизнь!`);
+            }
+            
+            this.renderTableWithIds();
+            await this.delay(2500);
+            if (this.checkWinCondition()) { this.endGame(this.winner); return; }
+            await this.startDay();
+        }
+
+        async startDay() {
+            this.phase = "DAY";
+            this.updateUI();
+            this.addEventLog("═════════ ДЕНЬ ═════════");
+            this.addEventLog("Наступает утро...");
+            this.addDiscussionMessage("Система", "☀️ Город просыпается. Начинается обсуждение...", false, true);
+            await this.delay(2500);
+            await this.botDiscussion();
+            
+            this.dayVotes.clear();
+            const alive = this.getAlivePlayers();
+            if (alive.length <= 1) { this.checkWinCondition(); if(!this.winner) this.endGame("Ничья"); return; }
+            const botVotes = await this.botDayVotes();
+            for (let [tid, cnt] of botVotes.entries()) this.dayVotes.set(tid, (this.dayVotes.get(tid) || 0) + cnt);
+            this.waitingForHumanAction = true;
+            this.updateActionButtonsDay();
+        }
+
+        async botDiscussion() {
+            const bots = this.players.filter(p => !this.isHuman(p) && p.alive);
+            const phrases = ["Мне кажется, кто-то слишком молчалив...", "Я за мирное решение!", "Тот, кто не голосует - мафия!", "Проверим интуицию.", "Кто-то вёл себя подозрительно ночью.", "Давайте выслушаем всех.", "У меня есть подозрения!", "Нужно голосовать обдуманно."];
+            for (let bot of bots) {
+                await this.delay(2800);
+                this.addDiscussionMessage(bot.name, phrases[Math.floor(Math.random() * phrases.length)], false);
+            }
+            this.addDiscussionMessage("Система", "🗳️ Начинается голосование...", false, true);
+            await this.delay(2000);
+        }
+
+        async botDayVotes() {
+            const votes = new Map();
+            const bots = this.players.filter(p => !this.isHuman(p) && p.alive);
+            for (let bot of bots) {
+                await this.delay(1800);
+                const aliveOthers = this.getAlivePlayers().filter(p => p.id !== bot.id);
+                if (aliveOthers.length === 0) continue;
+                let chosen = aliveOthers[Math.floor(Math.random() * aliveOthers.length)];
+                
+                // Боты-мафия и боты-маньяк не голосуют друг против друга, если видят союзников
+                if (bot.roleKey === "MAFIA") {
+                    const notAllies = aliveOthers.filter(p => p.roleKey !== "MAFIA" && p.roleKey !== "MANIAC");
+                    if (notAllies.length > 0) chosen = notAllies[Math.floor(Math.random() * notAllies.length)];
+                } else if (bot.roleKey === "MANIAC") {
+                    const notAllies = aliveOthers.filter(p => p.roleKey !== "MANIAC");
+                    if (notAllies.length > 0) chosen = notAllies[Math.floor(Math.random() * notAllies.length)];
+                }
+                
+                if (chosen) {
+                    votes.set(chosen.id, (votes.get(chosen.id) || 0) + 1);
+                    this.addEventLog(`🗳️ ${bot.name} голосует за ${chosen.name}`);
+                }
+            }
+            return votes;
+        }
+
+        async resolveDay(humanVoteId) {
+            this.isProcessing = true;
+            if (humanVoteId !== undefined) {
+                this.addEventLog(`🗳️ Вы голосуете за ${this.getPlayerById(humanVoteId)?.name}`);
+                this.dayVotes.set(humanVoteId, (this.dayVotes.get(humanVoteId) || 0) + 1);
+            }
+            await this.delay(2000);
+            let max = -1, eliminatedId = null;
+            for (let [pid, cnt] of this.dayVotes.entries()) {
+                if (cnt > max) { max = cnt; eliminatedId = pid; }
+                else if (cnt === max) eliminatedId = null;
+            }
+            if (eliminatedId === null) {
+                this.addEventLog("🤝 Голоса разделились, никто не казнён.");
+                this.addDiscussionMessage("Система", "🤝 Голоса разделились, никто не казнён", false, true);
+                this.afterExecution(null); this.isProcessing = false; return;
+            }
+            const target = this.getPlayerById(eliminatedId);
+            if (!target || !target.alive) { this.afterExecution(null); this.isProcessing = false; return; }
+            this.addEventLog(`⚖️ Большинством голосов казнить ${target.name}!`);
+            await this.delay(1800);
+            
+            const lawyer = this.players.find(p => p.alive && p.roleKey === "LAWYER" && !p.extra.lawyerProtectUsed);
+            if (lawyer && !this.lawyerUsed) {
+                if (!this.isHuman(lawyer)) {
+                    const saveChance = Math.random() < 0.4;
+                    if (saveChance) {
+                        this.addEventLog(`⚖️ Адвокат спасает ${target.name} от казни!`);
+                        this.addDiscussionMessage("Система", `⚖️ Адвокат спасает ${target.name}!`, false, true);
+                        lawyer.extra.lawyerProtectUsed = true; this.lawyerUsed = true;
+                        this.afterExecution(null); this.isProcessing = false; return;
+                    }
+                } else {
+                    this.addDiscussionMessage("Система", `⚖️ Вы - Адвокат! Спасти ${target.name} от казни?`, false, true);
+                    this.waitingForHumanAction = true;
+                    this.resolveCallback = (save) => {
+                        if (save) {
+                            this.addEventLog(`✨ Вы спасаете ${target.name} от казни!`);
+                            this.addDiscussionMessage("Система", `✨ Вы спасли ${target.name}!`, false, true);
+                            lawyer.extra.lawyerProtectUsed = true; this.lawyerUsed = true;
+                            this.afterExecution(null);
+                        } else { this.executePlayer(target); }
+                        this.isProcessing = false;
+                    };
+                    this.updateLawyerButtons(target);
+                    return;
+                }
+            }
+            await this.executePlayer(target);
+            this.isProcessing = false;
+        }
+
+        async executePlayer(p) {
+            p.alive = false;
+            this.addEventLog(`⚡ Казнь: ${p.name} (${ROLES_DB[p.roleKey].name})`);
+            this.addDiscussionMessage("Система", `⚡ Город казнил ${p.name} (${ROLES_DB[p.roleKey].name})`, false, true);
+            await this.delay(2500);
+            this.afterExecution(p);
+        }
+
+        afterExecution(executed) {
+            this.renderTableWithIds();
+            if (this.checkWinCondition()) { this.endGame(this.winner); return; }
+            this.phase = "NIGHT";
+            this.updateUI();
+            this.startNight().catch(console.error);
+        }
+
+        checkWinCondition() {
+            const alive = this.getAlivePlayers();
+            const evilCount = alive.filter(p => ROLES_DB[p.roleKey].team === "evil").length;
+            const goodCount = alive.filter(p => ROLES_DB[p.roleKey].team === "good").length;
+            if (evilCount === 0) { this.winner = "🏆 ПОБЕДА ДОБРА! Все преступники уничтожены! 🕊️"; return true; }
+            if (evilCount >= goodCount) { this.winner = "🔪 ПОБЕДА ЗЛА! Мафия и маньяк захватили город!"; return true; }
+            return false;
+        }
+
+        endGame(winnerText) {
+            this.phase = "END"; this.winner = winnerText; this.isProcessing = false;
+            this.updateUI();
+            this.addEventLog(`🏆 ${winnerText}`);
+            this.addDiscussionMessage("Система", `🏆 ${winnerText}`, false, true);
+            const actionDiv = document.getElementById("actionArea");
+            if (actionDiv) actionDiv.innerHTML = `<div class="winner-message">🏆 ${winnerText} 🏆<br><button id="restartBtn" style="margin-top:10px; padding:6px 20px; background:#9b4b1e; border-radius:40px; color:white; border:none; cursor:pointer;">♻️ Играть снова</button></div>`;
+            document.getElementById("restartBtn")?.addEventListener("click", () => location.reload());
+        }
+
+        isHuman(player) { return player.id === this.humanId; }
+
+        updateUI() {
+            this.renderTableWithIds();
+            const phaseEl = document.getElementById("phaseLabel");
+            if (phaseEl) phaseEl.innerHTML = this.phase === "NIGHT" ? "🌙 НОЧЬ" : "☀️ ДЕНЬ";
+            const myRoleSpan = document.getElementById("myRoleDisplay");
+            if (myRoleSpan && this.players[0]) myRoleSpan.innerHTML = `🎭 ${ROLES_DB[this.players[0].roleKey].name}`;
+        }
+
+        updateDiscussionUI() {
+            const container = document.getElementById("discussionMessages");
+            if (!container) return;
+            container.innerHTML = this.discussionMessages.slice(0, 40).map(m => {
+                if (m.isSystem) return `<div class="message-bubble system">${m.text}</div>`;
+                return `<div class="message-bubble ${m.isOutgoing ? 'outgoing' : 'incoming'}"><div class="message-sender">${m.sender} <span class="message-time">${m.time}</span></div><div>${m.text}</div></div>`;
+            }).join('');
+        }
+
+        updateEventUI() {
+            const container = document.getElementById("eventLogMessages");
+            if (!container) return;
+            container.innerHTML = this.eventMessages.slice(0, 50).map(m => `<div class="log-message">[${m.time}] ${m.text}</div>`).join('');
+        }
+
+        updateActionButtonsDay() {
+            const container = document.getElementById("actionButtonsContainer");
+            container.innerHTML = "";
+            const aliveTargets = this.getAlivePlayers().filter(p => p.id !== this.humanId);
+            document.getElementById("actionTitle").innerHTML = "🗳️ ДНЕВНОЕ ГОЛОСОВАНИЕ: выберите, кого казнить";
+            aliveTargets.forEach(t => {
+                const btn = document.createElement("button");
+                btn.innerText = `${t.avatar} ${t.name}`;
+                btn.className = "action-btn";
+                btn.onclick = () => { this.waitingForHumanAction = false; this.resolveDay(t.id); };
+                container.appendChild(btn);
+            });
+        }
+
+        updateLawyerButtons(target) {
+            const container = document.getElementById("actionButtonsContainer");
+            container.innerHTML = "";
+            const save = document.createElement("button");
+            save.innerText = "💼 СПАСТИ";
+            save.className = "action-btn";
+            save.onclick = () => { this.resolveCallback(true); };
+            const notSave = document.createElement("button");
+            notSave.innerText = "❌ НЕ СПАСАТЬ";
+            notSave.className = "action-btn";
+            notSave.onclick = () => { this.resolveCallback(false); };
+            container.appendChild(save); container.appendChild(notSave);
+            document.getElementById("actionTitle").innerHTML = `⚖️ ВЫ - АДВОКАТ! Спасти ${target.name} от казни?`;
+        }
+    }
+
+    // UI инициализация
+    const avatarsGrid = document.getElementById("avatarsGrid");
+    let selectedAvatar = "🧑‍🎩";
+    ALL_AVATARS.forEach(av => {
+        const div = document.createElement("div");
+        div.className = "avatar-option";
+        if (av.emoji === selectedAvatar) div.classList.add("selected");
+        div.innerHTML = `<div class="avatar-emoji">${av.emoji}</div><div class="avatar-name">${av.name}</div>`;
+        div.onclick = () => { document.querySelectorAll(".avatar-option").forEach(opt => opt.classList.remove("selected")); div.classList.add("selected"); selectedAvatar = av.emoji; };
+        avatarsGrid.appendChild(div);
+    });
+
+    const rolesList = ["MAFIA", "COMMISSIONER", "DOCTOR", "MANIAC", "SHERIFF", "LAWYER", "SNIPER", "SPY", "CIVILIAN"];
+    const rolesContainer = document.getElementById("rolesChecklist");
+    rolesList.forEach(roleKey => {
+        const div = document.createElement("div");
+        div.className = "role-checkbox";
+        div.innerHTML = `<input type="checkbox" value="${roleKey}" id="role_${roleKey}" checked><label for="role_${roleKey}">${ROLES_DB[roleKey].emoji} ${ROLES_DB[roleKey].name}</label>`;
+        rolesContainer.appendChild(div);
+    });
+
+    function updateRoleCount() {
+        const checked = document.querySelectorAll("#rolesChecklist input:checked").length;
+        const info = document.getElementById("roleCountInfo");
+        if (info) info.innerHTML = `✅ Выбрано: ${checked} из ${checked} (можно от 4 до 9)`;
+        const startBtn = document.getElementById("confirmStartBtn");
+        if (startBtn) startBtn.style.opacity = (checked >= 4 && checked <= 9) ? "1" : "0.5";
+    }
+    document.querySelectorAll("#rolesChecklist input").forEach(cb => cb.addEventListener("change", updateRoleCount));
+    updateRoleCount();
+
+    let game = null;
+    const splash = document.getElementById("splashScreen");
+    const gameDiv = document.getElementById("gameMain");
+
+    document.getElementById("confirmStartBtn").addEventListener("click", () => {
+        const userName = document.getElementById("playerNameInput").value.trim();
+        if (!userName) { alert("Введите ваше имя!"); return; }
+        const selectedRoles = Array.from(document.querySelectorAll("#rolesChecklist input:checked")).map(cb => cb.value);
+        if (selectedRoles.length < 4 || selectedRoles.length > 9) { alert("Выберите от 4 до 9 ролей!"); return; }
+        splash.style.display = "none";
+        gameDiv.style.display = "block";
+        game = new GameEngine(userName, selectedRoles, selectedAvatar);
+        game.initGame();
+    });
+
+    document.getElementById("showRulesSplash").addEventListener("click", () => alert("🎭 ПРАВИЛА:\n\n• МАФИЯ (зло) — убивает ночью. Мафия знает друг друга и видит маньяка.\n• МАНЬЯК (зло) — убивает ночью. Маньяк видит мафию.\n• КОМИССАР (добро) — проверяет мафию.\n• ДОКТОР (добро) — лечит.\n• ШЕРИФ (добро) — проверяет преступников.\n• АДВОКАТ (добро) — раз спасает от казни.\n• СНАЙПЕР (добро) — раз убивает ночью.\n• ШПИОН (добро) — узнаёт жертву мафии.\n• МИРНЫЙ (добро) — без способностей.\n\nПОБЕДА: Добро — убить всех злых. Зло — когда злых ≥ мирных."));
+    document.getElementById("toggleRulesBtn")?.addEventListener("click", () => document.getElementById("rulesPanel").classList.toggle("open"));
+    document.getElementById("sendChatBtn")?.addEventListener("click", () => { const input = document.getElementById("chatInput"); if (game && input) { game.addUserMessage(input.value); input.value = ""; } });
+    document.getElementById("chatInput")?.addEventListener("keypress", (e) => { if (e.key === "Enter") { const input = document.getElementById("chatInput"); if (game && input) { game.addUserMessage(input.value); input.value = ""; } } });
+</script>
+</body>
+</html>
